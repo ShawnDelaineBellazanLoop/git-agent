@@ -1,0 +1,11 @@
+{
+  "domain": "git-lifecycle",
+  "domain_map": {
+    "planner": "git stage",
+    "maker": "git commit",
+    "checker": "git diff/test",
+    "reflector": "git log review",
+    "hil": "open pull request",
+    "closed": "git tag and merge"
+  }
+}
