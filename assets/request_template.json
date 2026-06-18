@@ -1,0 +1,12 @@
+{
+  "intent": "Provision a new S3 bucket for audit logs",
+  "cycle_id": "CycleQ-20260618-TEST001",
+  "loop": 1,
+  "max_loops": 3,
+  "current_phase": "init",
+  "reflector_verdict": null,
+  "type1_action_requested": false,
+  "hil_token": null,
+  "constraints_active": [],
+  "context": {}
+}
