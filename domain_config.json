@@ -1,11 +1,27 @@
 {
+  "agent": "git-agent",
+  "version": "4.5.2",
+  "phase": "maker",
   "domain": "git-lifecycle",
-  "domain_map": {
-    "planner": "git stage",
-    "maker": "git commit",
-    "checker": "git diff/test",
-    "reflector": "git log review",
-    "hil": "open pull request",
-    "closed": "git tag and merge"
-  }
+  "atomicity_rule": "Each git operation is a single atomic command. A commit must include all staged changes in one call. A push must reference a single remote ref.",
+  "phase_labels": {
+    "open": "git-open",
+    "plan": "git-plan",
+    "make": "git-execute",
+    "check": "git-verify",
+    "reflect": "git-reflect",
+    "close": "git-close"
+  },
+  "domain_actions": {
+    "git_stage": "Stage specified files or paths via git add",
+    "git_commit": "Commit staged changes with PMCRO trail metadata in commit message",
+    "git_push": "Push committed changes to remote ref",
+    "git_diff": "Run diff against HEAD or specified ref — read-only",
+    "git_log": "Read commit history — read-only",
+    "git_tag": "Tag the current HEAD with a version label",
+    "git_merge": "Merge specified branch into current branch",
+    "git_open_pr": "Open pull request against protected branch via platform API"
+  },
+  "type1_actions": ["git_stage", "git_commit", "git_push", "git_tag", "git_merge", "git_open_pr"],
+  "type2_actions": ["git_diff", "git_log"]
 }

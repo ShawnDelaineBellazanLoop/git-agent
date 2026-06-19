@@ -1,70 +1,79 @@
 {
-  "skill": "orchestrator-agent",
-  "version_tested": "4.1.0",
-  "how_to_run": "For each case, call scripts/route_cycle.py:route(payload, governor_verdicts) and diff the result against `expected`.",
+  "skill": "git-agent",
+  "version_tested": "1.0.0",
+  "how_to_run": "For each case, call scripts/route_cycle.py:route(payload, governor_verdicts) and diff the result against `expected`. The git-agent adds a `git_action` field to every frame — eval cases verify both `routed_to` and `git_action`.",
   "cases": [
     {
-      "id": "orc-eval-001",
-      "description": "Fresh intent at init phase routes to planner in DIRECT mode.",
+      "id": "git-eval-001",
+      "description": "Standard init phase routes to planner and maps to git stage (GIT-004).",
       "input": {
         "payload": { "cycle_id": "CycleQ-EVAL001", "loop": 1, "max_loops": 3, "current_phase": "init" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "planner", "o_mode": "DIRECT", "hil_required": false }
+      "expected": { "routed_to": "planner", "git_action": "stage", "hil_required": false }
     },
     {
-      "id": "orc-eval-002",
-      "description": "loop == max_loops with reflector_verdict RETRY escalates to HIL instead of looping again (ORC-007).",
+      "id": "git-eval-002",
+      "description": "Planner phase routes to maker and maps to git commit (GIT-004).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL002", "loop": 3, "max_loops": 3, "current_phase": "checker", "reflector_verdict": "RETRY" },
+        "payload": { "cycle_id": "CycleQ-EVAL002", "loop": 1, "max_loops": 3, "current_phase": "planner" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "hil", "hil_required": true }
+      "expected": { "routed_to": "maker", "git_action": "commit", "hil_required": false }
     },
     {
-      "id": "orc-eval-003",
-      "description": "A governance verdict of BLOCK halts routing to HIL regardless of phase or loop (ORC-010).",
+      "id": "git-eval-003",
+      "description": "Maker phase routes to checker and maps to git diff/test (GIT-004).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL003", "loop": 1, "max_loops": 3, "current_phase": "planner" },
+        "payload": { "cycle_id": "CycleQ-EVAL003", "loop": 1, "max_loops": 3, "current_phase": "maker" },
+        "governor_verdicts": ["APPROVE"]
+      },
+      "expected": { "routed_to": "checker", "git_action": "diff_test", "hil_required": false }
+    },
+    {
+      "id": "git-eval-004",
+      "description": "Governance BLOCK triggers instant PR escalation (GIT-010), regardless of phase.",
+      "input": {
+        "payload": { "cycle_id": "CycleQ-EVAL004", "loop": 1, "max_loops": 3, "current_phase": "planner" },
         "governor_verdicts": ["APPROVE", "BLOCK", "APPROVE"]
       },
-      "expected": { "routed_to": "hil", "hil_required": true }
+      "expected": { "routed_to": "hil", "git_action": "open_pr", "hil_required": true }
     },
     {
-      "id": "orc-eval-004",
-      "description": "TYPE 1 action requested without a valid hil_token routes to HIL (ORC-018), even with clean governance.",
+      "id": "git-eval-005",
+      "description": "Protected branch push without HIL token opens PR (GIT-018).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL004", "loop": 1, "max_loops": 3, "current_phase": "maker", "type1_action_requested": true, "hil_token": null },
+        "payload": { "cycle_id": "CycleQ-EVAL005", "loop": 1, "max_loops": 3, "current_phase": "maker", "branch_protected": true, "hil_token": null },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "hil", "hil_required": true }
+      "expected": { "routed_to": "hil", "git_action": "open_pr", "hil_required": true }
     },
     {
-      "id": "orc-eval-005",
-      "description": "reflector_verdict ACCEPT closes the cycle.",
+      "id": "git-eval-006",
+      "description": "MaxLoops promotion: loop ceiling + RETRY forces PR instead of looping (GIT-007 / EC-009).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL005", "loop": 1, "max_loops": 3, "current_phase": "reflector", "reflector_verdict": "ACCEPT" },
+        "payload": { "cycle_id": "CycleQ-EVAL006", "loop": 3, "max_loops": 3, "current_phase": "checker", "reflector_verdict": "RETRY" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "closed", "hil_required": false }
+      "expected": { "routed_to": "hil", "git_action": "open_pr", "hil_required": true }
     },
     {
-      "id": "orc-eval-006",
-      "description": "reflector_verdict RETRY within budget re-enters planner, loop increments, and suggest_o_mode is honored (ORC-022).",
+      "id": "git-eval-007",
+      "description": "Reflector ACCEPT seals the cycle with tag and merge to main (GIT-022).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL006", "loop": 1, "max_loops": 3, "current_phase": "reflector", "reflector_verdict": "RETRY", "suggest_o_mode": "REFLECTIVE" },
+        "payload": { "cycle_id": "CycleQ-EVAL007", "loop": 1, "max_loops": 3, "current_phase": "reflector", "reflector_verdict": "ACCEPT" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "planner", "o_mode": "REFLECTIVE", "loop": 2 }
+      "expected": { "routed_to": "closed", "git_action": "tag_and_merge", "hil_required": false }
     },
     {
-      "id": "orc-eval-007",
-      "description": "Sequential phase routing advances maker to checker when no reflector_verdict is present yet.",
+      "id": "git-eval-008",
+      "description": "Reflector RETRY within budget re-enters planner, loop increments, suggest_o_mode honored (GIT-022).",
       "input": {
-        "payload": { "cycle_id": "CycleQ-EVAL007", "loop": 1, "max_loops": 3, "current_phase": "maker", "reflector_verdict": null },
+        "payload": { "cycle_id": "CycleQ-EVAL008", "loop": 1, "max_loops": 3, "current_phase": "reflector", "reflector_verdict": "RETRY", "suggest_o_mode": "REFLECTIVE" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "checker" }
+      "expected": { "routed_to": "planner", "git_action": "stage", "o_mode": "REFLECTIVE", "loop": 2 }
     }
   ]
 }
