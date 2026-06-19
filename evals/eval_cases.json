@@ -73,7 +73,7 @@
         "payload": { "cycle_id": "CycleQ-EVAL008", "loop": 1, "max_loops": 3, "current_phase": "reflector", "reflector_verdict": "RETRY", "suggest_o_mode": "REFLECTIVE" },
         "governor_verdicts": ["APPROVE"]
       },
-      "expected": { "routed_to": "planner", "git_action": "stage", "o_mode": "REFLECTIVE", "loop": 2 }
+      "expected": { "routed_to": "planner", "git_action": "stage", "cycle_policy": "REFLECTIVE", "loop": 2 }
     }
   ]
 }
